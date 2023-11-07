@@ -272,40 +272,49 @@ int check_blocks_in_use(int fd) {
 }
 
 //7
+//ตรวจสอบ inode ที่ใช้งานอยู่ว่ามี data block ที่ชี้มายัง direct address มากกว่า 1 datablock หรือไม่ ถ้าเป็นจริง ให้แสดงข้อความ ERROR: direct address used more than once.
 int check_direct_address_usage(int fd) {
+    // วนลูปตรวจสอบ inode ทุกตัว
     for (int inum = 0; inum < sb.ninodes; inum++) {
+        //File ที่อ่าน,offset ตำแหน่งที่จะอ่าน, where set ตามตำแหน่งที่จะได้,cur ตำแหน่งปัจจุบัน,end ตำแหน่งสุดท้ายของไฟล์
         if (lseek(fd, IBLOCK(inum, sb) * BSIZE, SEEK_SET) < 0) {
             perror("lseek");
             return 1;
         }
-
+        //File ที่อ่านตำแหน่งใน, memory buffer, count จำนวนข้อมูล
         if (read(fd, &inode, sizeof(inode)) != sizeof(inode)) {
             perror("read");
             return 1;
         }
-
+        // สร้างอาร์เรย์ไว้สำหรับเก็บ Track เพื่อใช้ในการเปรียบเทียบ
         int usedDirectAddresses[NDIRECT];
+        // ใส่ค่า 0 ลงไปตามขนาดของอาร์เรย์เพื่อใช้แทนค่าว่า inode ที่ตำแหน่งนี้ไม่มีการใช้งานเป็นค่า Free
         for (int i = 0; i < NDIRECT; i++) {
             usedDirectAddresses[i] = 0;
         }
-
+        // วนลูปตรวจสอบ direct address ใน inode ทุกตัว
         for (int i = 0; i < NDIRECT; i++) {
             if (inode.addrs[i] != 0) {
+                // ตรวจสอบว่า direct address นั้นถูกใช้งานมาก่อนหรือยัง ถ้าใช้แล้วให้คืนค่า 1
                 if (usedDirectAddresses[i] == 1) {
                     return 1; // Direct address used more than once
                 } 
-                else {
+                else {//แต่ถ้ายังไม่ถูกใช้งานให้ Mark direct address นั้นให้มีค่าเท่ากับ 1
                     usedDirectAddresses[i] = 1; // Mark the address as used
                 }
             }
         }
+        //ถ้าวนจนครบทุก inode ของ direct address แล้ว ให้ออกจาก for loop
     }
+    //แล้วคืนค่า 0 กลับไปเพื่อบอกว่าไฟล์ fd ไม่มีปัญหาเรื่อง inode ที่ใช้งานอยู่ว่ามี data block ที่ชี้มายัง direct address มากกว่า 1 datablock
     return 0; // No errors found
 }
 
 //8
+//ตรวจสอบ inode ที่ใช้งานอยู่ว่ามี data block ที่ชี้มายัง indirect address มากกว่า 1 datablock หรือไม่ ถ้าเป็นจริง ให้แสดงข้อความ ERROR: indirect address used more than once.
 int check_indirect_address_usage(int fd) {
     char buffer[BSIZE]; // Declare a buffer to read the indirect block
+    // วนลูปตรวจสอบ inode ทุกตัว
     for (int inum = 0; inum < sb.ninodes; inum++) {
         if (lseek(fd, IBLOCK(inum, sb) * BSIZE, SEEK_SET) < 0) {
             perror("lseek");
@@ -316,7 +325,7 @@ int check_indirect_address_usage(int fd) {
             perror("read");
             return 1;
         }
-
+        // สร้างอาร์เรย์ไว้สำหรับเก็บ Track เพื่อใช้ในการเปรียบเทียบ
         int usedIndirectAddresses[NINDIRECT];
         for (int i = NDIRECT; i < NINDIRECT; i++) {
             usedIndirectAddresses[i] = 0;
@@ -331,18 +340,22 @@ int check_indirect_address_usage(int fd) {
                 perror("read");
                 return 1;
             }
+            // วนลูปตรวจสอบ indirect address ใน inode ทุกตัว
             for (int i = 0; i < NINDIRECT; i++) {
+                // ตรวจสอบว่า indirect address นั้นถูกใช้งานมาก่อนหรือยัง ถ้าใช้แล้วให้คืนค่า 1 
                 if (buffer[i] != 0) {
                     if (usedIndirectAddresses[i] == 1) {
                         return 1; // Indirect address used more than once
                     } 
-                    else {
+                    else {//แต่ถ้ายังไม่ถูกใช้งานให้ Mark indirect address นั้นให้มีค่าเท่ากับ 1
                         usedIndirectAddresses[i] = 1; // Mark the address as used
                     }
                 }
             }
         }
+        //ถ้าวนจนครบทุก inode ของ direct address แล้ว ให้ออกจาก for loop
     }
+    //แล้วคืนค่า 0 กลับไปเพื่อบอกว่าไฟล์ fd ไม่มีปัญหาเรื่อง inode ที่ใช้งานอยู่ว่ามี data block ที่ชี้มายัง indirect address มากกว่า 1 datablock
     return 0; // No errors found
 }
 
