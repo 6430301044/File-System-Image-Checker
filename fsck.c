@@ -316,7 +316,7 @@ int check_indirect_address_usage(int fd) {
         // ตรวจสอบว่า inode นั้นเป็นไฟล์ที่มี data block หรือเปล่า [Allocation File]
         if (readi(fd, inum, &inode) > 0) {
             // สร้างอาร์เรย์ไว้สำหรับเก็บ Track เพื่อใช้ในการเปรียบเทียบ
-            int usedAddresses[NINDIRECT];
+            int usedIndirectAddresses[NINDIRECT];
             for (int i = NDIRECT; i < NINDIRECT; i++) {
                 usedIndirectAddresses[i] = 0; // ใส่ค่า 0 ลงไปตามขนาดของอาร์เรย์เพื่อใช้แทนค่าว่า inode ที่ตำแหน่งนี้ไม่มีการใช้งานเป็นค่า Free
             }
