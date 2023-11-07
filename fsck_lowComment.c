@@ -82,15 +82,15 @@ int check_indirectAddres(int fd){
 int check_root_directory(int fd) {
     struct dinode root_inode;
     if (readi(fd, 1, &root_inode) < 0) {
-        return 1; // Error reading the root directory inode
+        return 1;
     }
     if (root_inode.type != T_DIR) {
-        return 1; // Root directory does not exist or has the wrong type
+        return 1; 
     }
     if (root_inode.addrs[0] != 1) {
-        return 1; // Root directory's parent is not itself
+        return 1; 
     }
-    return 0; // No errors found
+    return 0; 
 }
 
 int check_directory_format(int fd) {
@@ -100,7 +100,7 @@ int check_directory_format(int fd) {
                 for (int offset = 0; offset < BSIZE; offset += sizeof(de)) {
                     if (pread(fd, &de, sizeof(de), inode.addrs[0] * BSIZE + offset) < 0) {
                         perror("pread");
-                        return 1; // Error reading the directory entry
+                        return 1; 
                     }
                     if (strcmp(de.name, ".") == 0) {
                         if (de.inum != inum) {
@@ -192,7 +192,7 @@ int check_direct_address_usage(int fd) {
         if (readi(fd, inum, &inode) > 0) {
             int usedDirectAddresses[NDIRECT];
             for (int i = 0; i < NDIRECT; i++) {
-                usedDirectAddresses[i] = 0; // ใส่ค่า 0 ลงไปตามขนาดของอาร์เรย์เพื่อใช้แทนค่าว่า inode ที่ตำแหน่งนี้ไม่มีการใช้งานเป็นค่า Free
+                usedDirectAddresses[i] = 0; 
             }
             for (int i = 0; i < NDIRECT; i++) {
                 if (inode.addrs[i] != 0) {
@@ -214,7 +214,7 @@ int check_indirect_address_usage(int fd) {
         if (readi(fd, inum, &inode) > 0) {
             int usedIndirectAddresses[NINDIRECT];
             for (int i = NDIRECT; i < NINDIRECT; i++) {
-                usedIndirectAddresses[i] = 0; // ใส่ค่า 0 ลงไปตามขนาดของอาร์เรย์เพื่อใช้แทนค่าว่า inode ที่ตำแหน่งนี้ไม่มีการใช้งานเป็นค่า Free
+                usedIndirectAddresses[i] = 0; 
             }
             if (inode.addrs[NDIRECT] != 0) {
                 if (pread(fd, buffer, BSIZE, inode.addrs[NDIRECT] * BSIZE) < 0) {
